@@ -1,0 +1,1 @@
+void create_BWT(char *inputFileName, char *inputFolderName);
