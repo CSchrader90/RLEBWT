@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "buckets.h"
 
 const int ALPHABET_SIZE  = 128;
@@ -14,7 +15,6 @@ struct bucket_node **new_bucket_list(){
 
 	return list;
 }
-
 
 void add_to_bucket_list(struct bucket_node **list, unsigned int index, unsigned char bucket){
 
@@ -114,10 +114,10 @@ void sortSArray(struct bucket_array bucket_array, unsigned int bucket_start, uns
 
 	_Bool bucket_boundary = true;
 
-	while(bucket_end <= num_S){
+	while(bucket_end < num_S){
 
 		//Find the last element of current bucket
-		while(!bucket_array.bucket_edge[bucket_end + 1]){
+		while(bucket_end < num_S-1 && !bucket_array.bucket_edge[bucket_end + 1]){
 			bucket_end++;
 		}
 		bucket_size = bucket_end-bucket_start + 1;
@@ -143,7 +143,7 @@ void sortSArray(struct bucket_array bucket_array, unsigned int bucket_start, uns
 					head = head->next;
 				}
 			}
-
+			
 			//Replace elements of bucket array with those in tempArray
 			for(int i = 0; i < bucket_size; i++){
 				bucket_array.array[bucket_start + i] = tempArray.array[i];
