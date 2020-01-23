@@ -143,11 +143,34 @@ void sortSArray(struct bucket_array bucket_array, unsigned int bucket_start, uns
 					head = head->next;
 				}
 			}
-			
+
 			//Replace elements of bucket array with those in tempArray
 			for(int i = 0; i < bucket_size; i++){
 				bucket_array.array[bucket_start + i] = tempArray.array[i];
 				bucket_array.bucket_edge[bucket_start + i] = tempArray.bucket_edge[i];
+			}
+			
+			if(++m <= max_m){
+				m_head = m_head->next;
+				//For each sub-bucket
+				int sub_start = bucket_start; //start of sub-bucket
+				int sub_end   = bucket_end;
+
+				while(sub_start < bucket_end){
+
+					if(bucket_array.bucket_edge[sub_start+1] == true){
+						sub_start++;
+
+					} else {
+						//Find end of bucket
+						sub_end = sub_start;
+						while(sub_end < bucket_end && bucket_array.bucket_edge[sub_end == false])
+							sub_end++;
+						sortSArray(bucket_array, sub_start, sub_end, m, max_m, m_head);
+						sub_start = sub_end + 1;
+					}
+				}
+
 			}
 
 			free(tempArray.array);

@@ -94,9 +94,12 @@ void create_BWT(char *inputFileName, char *inputFolderName){
 	struct bucket_array S_array = bucket_to_array(S_buckets, num_S);
 	free(S_buckets);
 	displayBucketArray(S_array, num_S);
+	printf("\n");
 
 	//Sort the buckets of S indexes with m-lists
 	sortSArray(S_array, 0, num_S, 1, max_dist, m_lists);
+
+	displayBucketArray(S_array, num_S);
 
 	free_m_lists(m_lists);
 	free(B_File);
