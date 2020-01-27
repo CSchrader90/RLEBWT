@@ -104,7 +104,56 @@ _Bool bucketContainsMultipleEntries(struct bucket_array bucket_array, int bucket
 	return false;
 }
 
-void sortSArray(struct bucket_array bucket_array, unsigned int bucket_start, unsigned int num_S, int m, int max_m, struct m_list *m_list){
+void sortBy_S(struct bucket_array bucket_array, unsigned int num_S, unsigned int dist){
+	unsigned int bucket_start = 0;
+	unsigned int bucket_end, bucket_size;
+	unsigned int tempWriteIndex;
+
+	struct bucket_array tempArray;
+
+	while(bucket_start < num_S - 1){
+
+		while(bucket_start < num_S - 1 && bucket_array.bucket_edge[bucket_start + 1] == true)
+			bucket_start++;
+
+		bucket_end = bucket_start;
+		while(bucket_end < num_S - 1 && bucket_array.bucket_edge[bucket_end + 1] == false){
+			bucket_end = bucket_end + 1;
+		}
+
+		bucket_size = bucket_end - bucket_start + 1;
+		if(bucket_size > 1){	
+			tempArray.array = malloc(sizeof(unsigned int)*bucket_size);
+			tempArray.bucket_edge = malloc(sizeof(_Bool)*bucket_size);
+
+			tempWriteIndex = 0;
+			for(int i = 0; i < num_S; i ++){
+				for(int j = 0; j < bucket_size; j++){
+					if(bucket_array.array[bucket_start +j] + dist == bucket_array.array[i]){
+						tempArray.array[tempWriteIndex] = bucket_array.array[bucket_start + j];
+						tempArray.bucket_edge[tempWriteIndex] = true;
+						tempWriteIndex++;
+					}
+				}
+			}
+
+			for(int k = 0; k < bucket_size; k++){
+				bucket_array.array[bucket_start + k] = tempArray.array[k];
+				bucket_array.bucket_edge[bucket_start + k] = tempArray.bucket_edge[k];
+			}
+
+			free(tempArray.array);
+			free(tempArray.bucket_edge);
+		}
+
+		bucket_start = bucket_end + 1;
+	}
+
+
+}
+
+
+void sortBy_m(struct bucket_array bucket_array, unsigned int bucket_start, unsigned int num_S, int m, int max_m, struct m_list *m_list){
 
 	unsigned int bucket_size;
 	unsigned int bucket_end = bucket_start;
@@ -114,7 +163,7 @@ void sortSArray(struct bucket_array bucket_array, unsigned int bucket_start, uns
 
 	_Bool bucket_boundary = true;
 
-	while(bucket_end < num_S){
+	while(bucket_end < num_S - 1 && m <= max_m){
 
 		//Find the last element of current bucket
 		while(bucket_end < num_S-1 && !bucket_array.bucket_edge[bucket_end + 1]){
@@ -149,8 +198,8 @@ void sortSArray(struct bucket_array bucket_array, unsigned int bucket_start, uns
 				bucket_array.array[bucket_start + i] = tempArray.array[i];
 				bucket_array.bucket_edge[bucket_start + i] = tempArray.bucket_edge[i];
 			}
-			
-			if(++m <= max_m){
+
+			if(m + 1 <= max_m){
 				m_head = m_head->next;
 				//For each sub-bucket
 				int sub_start = bucket_start; //start of sub-bucket
@@ -160,23 +209,20 @@ void sortSArray(struct bucket_array bucket_array, unsigned int bucket_start, uns
 
 					if(bucket_array.bucket_edge[sub_start+1] == true){
 						sub_start++;
-
 					} else {
 						//Find end of bucket
-						sub_end = sub_start;
-						while(sub_end < bucket_end && bucket_array.bucket_edge[sub_end == false])
+						sub_end = sub_start + 1;
+						while(sub_end < bucket_end && bucket_array.bucket_edge[sub_end + 1] == false)
 							sub_end++;
-						sortSArray(bucket_array, sub_start, sub_end, m, max_m, m_head);
+						sortBy_m(bucket_array, sub_start, sub_end + 1, m + 1, max_m, m_head);
 						sub_start = sub_end + 1;
 					}
 				}
-
 			}
-
 			free(tempArray.array);
 			free(tempArray.bucket_edge);
 		}
 		bucket_start = bucket_end + 1;
 		bucket_end = bucket_start + 1;
-	}	
+	}
 }

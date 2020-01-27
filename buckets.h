@@ -23,4 +23,5 @@ void add_to_m_list(struct m_list *lists, unsigned int distance, unsigned int ind
 void free_m_lists(struct m_list *m);
 struct bucket_array bucket_to_array(struct bucket_node **S_buckets, int num_S);
 _Bool bucketContainsMultipleEntries(struct bucket_array bucket_array, int bucket_start, int bucket_end);
-void sortSArray(struct bucket_array bucket_array, unsigned int bucket_start, unsigned int num_S, int m, int max_m, struct m_list *m_list);
+void sortBy_m(struct bucket_array bucket_array, unsigned int bucket_start, unsigned int num_S, int m, int max_m, struct m_list *m_list);
+void sortBy_S(struct bucket_array bucket_array, unsigned int num_S, unsigned int dist);
