@@ -6,13 +6,12 @@
 #include "BWT.h"
 #include "buckets.h"
 
-
 int main(int argc, char *argv[]) {
 
 	if(argc!= 5){
 		fprintf(stderr, "usage: rlebwt -X FILENAME INDEX_FOLDER QUERY_STRING\n");
 	}
-	
+
 	char *inputFileName = malloc(MAX_INPUT_FILE_NAME*sizeof(char));
 	char *inputFolderName = malloc(MAX_INDEX_FOLDER_NAME*sizeof(char));
 	char *QUERY_STRING = malloc(MAX_QUERY_STRING_LENGTH*sizeof(char));
