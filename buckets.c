@@ -10,11 +10,10 @@ const int ALPHABET_SIZE  = 128;
 struct bucket_node **new_bucket_list(){
 
 	struct bucket_node **list = malloc(sizeof(struct bucket_node *)*ALPHABET_SIZE);
-	for(int i = 0; i<ALPHABET_SIZE; i++){
+	for(int i = 0; i < ALPHABET_SIZE; i++){
 		list[i] = malloc(sizeof(struct bucket_node));
 		list[i]->next = NULL;
 	}
-
 	return list;
 }
 
@@ -38,6 +37,7 @@ void free_bucket_list(struct bucket_node **list){
 			free(list[i]);
 			list[i] = temp;
 		}
+		free(list[i]);
 	}
 	free(list);
 }
@@ -65,13 +65,15 @@ void add_to_m_list(struct m_list *lists, unsigned int distance, unsigned int ind
 }
 
 void free_m_lists(struct m_list *m){
-	struct bucket_node **list = m->list;
-
+	struct m_list *temp;
 	while(m->next!=NULL){
-		list = m->list;
-		free_bucket_list(list);
-		m = m->next;
+		free_bucket_list(m->list);
+		temp = m->next;
+		free(m);
+		m = temp;
 	}
+	free_bucket_list(m->list);
+	free(m);
 }
 
 struct bucket_array bucket_to_array(struct bucket_node **S_buckets, int num_S){
@@ -84,7 +86,7 @@ struct bucket_array bucket_to_array(struct bucket_node **S_buckets, int num_S){
 
 	int index = 0;
 
-	for(int i=0; i<ALPHABET_SIZE; i++){
+	for(int i = 0; i < ALPHABET_SIZE; i++){
 		head = S_buckets[i];
 		if(head->next!=NULL){
 			array.array[index] = head->val;
@@ -99,6 +101,11 @@ struct bucket_array bucket_to_array(struct bucket_node **S_buckets, int num_S){
 	}
 
 	return array;
+}
+
+void free_bucket_array(struct bucket_array array){
+	free(array.array);
+	free(array.bucket_edge);
 }
 
 _Bool distFound(_Bool *foundinS, int bucket_size){
@@ -171,11 +178,9 @@ void lexo_merge(unsigned int *array, unsigned int ls, unsigned int le, unsigned 
 
 		if(lexo_greater(array, in_file, array[l_count], array[r_count], sub_array_size, num_chars)){
 			temp_array[temp_idx++] = array[r_count++];
-			printf("lexo_greater = true\n");
 		}
 		else{
 			temp_array[temp_idx++] = array[l_count++];
-			printf("lexo_greater = false\n");
 		}
 	}
 	
@@ -240,7 +245,6 @@ void sortBy_S(struct bucket_array bucket_array, unsigned int num_S, unsigned int
 				if(distFound(foundinS, bucket_size)){
 					dist = cand_dist;
 					end_loop = true;
-					printf("Distance found to be %d\n", dist);
 				}else{
 					for(int j = 0; j < bucket_size; j++)
 						foundinS[j] = false;
@@ -249,9 +253,6 @@ void sortBy_S(struct bucket_array bucket_array, unsigned int num_S, unsigned int
 
 			//If S indexes are found at equal distance from all indexes in bucket
 			if(distFound(foundinS, bucket_size)){
-				printf("DEBUG: bucket_size = %d\n", bucket_size);
-				for(int k = 0; k <bucket_size; k++)
-					printf("DEBUG: bucket_array.array[bucket_start + k] = %d\n", bucket_array.array[bucket_start + k]);
 				for(int i = 0; i < num_S; i++){
 					for(int j = 0; j < bucket_size; j++){
 						if(bucket_array.array[bucket_start + j] + dist == bucket_array.array[i]){
@@ -285,10 +286,6 @@ void sortBy_m(struct bucket_array bucket_array, unsigned int bucket_start, unsig
 
 	_Bool bucket_boundary = true;
 
-
-	printf("Entering sortBy_m: bucket_start = %d, m = %d\n", bucket_start, m);
-
-
 	while(bucket_end < num_S - 1 && m <= max_m){
 
 		//Find the last element of current bucket
@@ -296,7 +293,6 @@ void sortBy_m(struct bucket_array bucket_array, unsigned int bucket_start, unsig
 			bucket_end++;
 		}
 		bucket_size = bucket_end - bucket_start + 1;
-		printf("bucket starting at index %d found with bucket size %d\n\n\n", bucket_start, bucket_size);
 
 		if(bucket_size > 1){
 			tempArray.array = malloc(sizeof(unsigned int)*bucket_size);

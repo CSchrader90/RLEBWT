@@ -36,12 +36,8 @@ void create_BWT(char *inputFileName, char *outputFolderName){
 	struct bucket_node **S_buckets = new_bucket_list();
 	struct m_list *m_lists = create_m_lists(1);
 
-	unsigned int monitor = 0;
-
-
 	read(in_file, buf_start, 1);
 	while(read(in_file, buf_end, 1)){
-
 		end_idx++;
 
 		//Find sequences of repeated characters
@@ -78,7 +74,6 @@ void create_BWT(char *inputFileName, char *outputFolderName){
 	}
 
 	struct bucket_array S_array = bucket_to_array(S_buckets, num_S);
-	free(S_buckets);
 
 	//Sort the buckets of S indexes with m-lists
 	sortBy_m(S_array, 0, num_S, 1, max_dist, m_lists);
@@ -106,6 +101,7 @@ void create_BWT(char *inputFileName, char *outputFolderName){
 
 	lseek(in_file, num_chars - 2, SEEK_SET);
 	read(in_file, buf_temp, 1);
+
 	add_to_bucket_list(bucket_final, num_chars - 2, *buf_temp);
 
 	lseek(in_file, S_array.array[S_counter], SEEK_SET);
@@ -122,13 +118,15 @@ void create_BWT(char *inputFileName, char *outputFolderName){
 
 	while(S_counter < num_S || final_list_char < ALPHABET_SIZE){
 
-		if(S_counter < num_S && final_list_char < ALPHABET_SIZE)
+		if(S_counter < num_S && final_list_char < ALPHABET_SIZE){
 			next_bucket = (final_list_char > *buf_S) ?  *buf_S : final_list_char;
-		else if(S_counter >= num_S)
+		}
+		else if(S_counter >= num_S){
 			next_bucket = final_list_char;
-		else 
+		}
+		else {
 			next_bucket = *buf_S;
-		
+		}
 
 		if(next_bucket == final_list_char){ //If the next bucket has elements in final_list
 			final_list_head = bucket_final[final_list_char];
@@ -142,26 +140,36 @@ void create_BWT(char *inputFileName, char *outputFolderName){
 					if(buf_temp[1] < buf_temp[0]) //if T[i-1] is type L
 						add_to_bucket_list(bucket_final, final_list_head->val - 1, *buf_temp);
 					
+				}
 				final_list_head = final_list_head->next;
 			}
 			final_list_char++;
+
 		} else {
-			lseek(in_file, S_array.array[S_counter] - 1, SEEK_SET);
-			read(in_file, buf_temp, 2);
-			if(buf_temp[1] < buf_temp[0]){ //if T[i-1] is type L
-				add_to_bucket_list(bucket_final, S_array.array[S_counter] - 1, buf_temp[0]);
-				S_counter++;
+
+			if(S_array.array[S_counter] > 0){
+				lseek(in_file, S_array.array[S_counter] - 1, SEEK_SET);
+				read(in_file, buf_temp, 2);	
+				
+				if(buf_temp[1] < buf_temp[0]){ //if T[i-1] is type L
+					add_to_bucket_list(bucket_final, S_array.array[S_counter] - 1, buf_temp[0]);
+					S_counter++;
+				}				
 			}
+
 			lseek(in_file, S_array.array[S_counter], SEEK_SET);
 			read(in_file, buf_S, 1);
 
 			while(*buf_S == next_bucket && S_counter < num_S){
-				lseek(in_file, S_array.array[S_counter] - 1, SEEK_SET);
-				read(in_file, buf_S, 2);
+				if(S_array.array[S_counter] > 0){
+					lseek(in_file, S_array.array[S_counter] - 1, SEEK_SET);
+					read(in_file, buf_S, 2);
 
-				if(buf_S[1] < buf_S[0]){ //if T[i-1] is type L
-					add_to_bucket_list(bucket_final, S_array.array[S_counter] - 1, buf_S[0]);
-				} else
+					if(buf_S[1] < buf_S[0]) //if T[i-1] is type L
+						add_to_bucket_list(bucket_final, S_array.array[S_counter] - 1, buf_S[0]);
+									
+				}
+
 				S_counter++;
 				if(S_counter < num_S){
 					lseek(in_file, S_array.array[S_counter], SEEK_SET);
@@ -189,7 +197,6 @@ void create_BWT(char *inputFileName, char *outputFolderName){
 	}
 
 	struct bucket_node *head;
-
 	int temp_idx;
 	for(int i = 0; i <ALPHABET_SIZE; i ++){
 		head = bucket_final[i];
@@ -206,10 +213,14 @@ void create_BWT(char *inputFileName, char *outputFolderName){
 		}
 	}
 
-	free_m_lists(m_lists);
+
 	free_bucket_list(bucket_final);
+	free_bucket_list(S_buckets);
+	free_bucket_array(S_array);
+	free_m_lists(m_lists);
 	free(output_file_name);
 	free(buf_start);
 	free(buf_end);
 	free(buf_temp);
+	free(buf_S);
 }
