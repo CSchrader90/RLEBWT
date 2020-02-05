@@ -74,12 +74,12 @@ void create_BWT(char *inputFileName, char *outputFolderName){
 	}
 
 	struct bucket_array S_array = bucket_to_array(S_buckets, num_S);
+	free_bucket_list(S_buckets);
 
 	//Sort the buckets of S indexes with m-lists
 	sortBy_m(S_array, 0, num_S, 1, max_dist, m_lists);
+	free_m_lists(m_lists);
 
-	//Sort last S-indexes using order of buckes in its own list
-	sortBy_S(S_array, num_S, max_dist);
 
 	//If there are still buckets of S with multiple values
 	unsigned int bucket_start = 0;
@@ -101,12 +101,11 @@ void create_BWT(char *inputFileName, char *outputFolderName){
 
 	lseek(in_file, num_chars - 2, SEEK_SET);
 	read(in_file, buf_temp, 1);
-
 	add_to_bucket_list(bucket_final, num_chars - 2, *buf_temp);
 
 	lseek(in_file, S_array.array[S_counter], SEEK_SET);
 	read(in_file, buf_S, 1);//Determine character the current S_array bucket represents
-
+	
 	_Bool found = false;
 	unsigned char final_list_char = '\0';
 	while(final_list_char < ALPHABET_SIZE && !found){
@@ -118,15 +117,12 @@ void create_BWT(char *inputFileName, char *outputFolderName){
 
 	while(S_counter < num_S || final_list_char < ALPHABET_SIZE){
 
-		if(S_counter < num_S && final_list_char < ALPHABET_SIZE){
+		if(S_counter < num_S && final_list_char < ALPHABET_SIZE)
 			next_bucket = (final_list_char > *buf_S) ?  *buf_S : final_list_char;
-		}
-		else if(S_counter >= num_S){
+		else if(S_counter >= num_S)
 			next_bucket = final_list_char;
-		}
-		else {
+		else 
 			next_bucket = *buf_S;
-		}
 
 		if(next_bucket == final_list_char){ //If the next bucket has elements in final_list
 			final_list_head = bucket_final[final_list_char];
@@ -195,7 +191,9 @@ void create_BWT(char *inputFileName, char *outputFolderName){
 		read(in_file, buf_temp, 1);
 		add_to_bucket_list(bucket_final, S_array.array[i], *buf_temp);
 	}
+	free_bucket_array(S_array);
 
+	//Write to file
 	struct bucket_node *head;
 	int temp_idx;
 	for(int i = 0; i <ALPHABET_SIZE; i ++){
@@ -213,11 +211,7 @@ void create_BWT(char *inputFileName, char *outputFolderName){
 		}
 	}
 
-
 	free_bucket_list(bucket_final);
-	free_bucket_list(S_buckets);
-	free_bucket_array(S_array);
-	free_m_lists(m_lists);
 	free(output_file_name);
 	free(buf_start);
 	free(buf_end);

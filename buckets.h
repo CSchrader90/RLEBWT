@@ -3,6 +3,7 @@ extern const int ALPHABET_SIZE;
 struct bucket_node {
 	unsigned int val;
 	struct bucket_node *next;
+	struct bucket_node *last;
 };
 
 struct m_list {
@@ -22,6 +23,7 @@ struct m_list *create_m_lists(int m);
 void add_to_m_list(struct m_list *lists, unsigned int distance, unsigned int index, unsigned char bucket);
 void free_m_lists(struct m_list *m);
 void free_bucket_list(struct bucket_node **list);
+struct bucket_array new_bucket_array(unsigned int size);
 void free_bucket_array(struct bucket_array array);
 struct bucket_array bucket_to_array(struct bucket_node **S_buckets, int num_S);
 _Bool bucketContainsMultipleEntries(struct bucket_array bucket_array, int bucket_start, int bucket_end);

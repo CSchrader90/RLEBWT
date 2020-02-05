@@ -13,19 +13,19 @@ struct bucket_node **new_bucket_list(){
 	for(int i = 0; i < ALPHABET_SIZE; i++){
 		list[i] = malloc(sizeof(struct bucket_node));
 		list[i]->next = NULL;
+		list[i]->last = list[i];
 	}
 	return list;
 }
 
 void add_to_bucket_list(struct bucket_node **list, unsigned int index, unsigned char bucket){
 
-	struct bucket_node *head = list[bucket];
-	while(head->next!=NULL)
-		head = head->next;
+	struct bucket_node *head = list[bucket]->last;
 	head->val = index;
 	head->next = malloc(sizeof(struct bucket_node));
 	head = head->next;
 	head->next = NULL;
+	list[bucket]->last = head;
 }
 
 void free_bucket_list(struct bucket_node **list){
@@ -99,8 +99,14 @@ struct bucket_array bucket_to_array(struct bucket_node **S_buckets, int num_S){
 			}
 		}
 	}
-
 	return array;
+}
+
+struct bucket_array new_bucket_array(unsigned int size){
+	struct bucket_array new;
+	new.array = malloc(sizeof(unsigned int)*size);
+	new.bucket_edge = malloc(sizeof(unsigned int)*size);
+	return new;
 }
 
 void free_bucket_array(struct bucket_array array){
@@ -119,11 +125,8 @@ _Bool distFound(_Bool *foundinS, int bucket_size){
 _Bool bucket_overfull(struct bucket_array bucket_array, int bucket_start, int bucket_size){
 	int j = 0;
 	while(j < bucket_size){
-		if(bucket_array.bucket_edge[bucket_start + j] == true){
-			j++;
-		} else {
-			return true;
-		}
+		if(bucket_array.bucket_edge[bucket_start + j] == true) j++; 
+		else return true;
 	}
 	return false;
 }
@@ -131,9 +134,7 @@ _Bool bucket_overfull(struct bucket_array bucket_array, int bucket_start, int bu
 unsigned int findBucketEnd(struct bucket_array bucket_array, unsigned int bucket_start, unsigned int num_elems){
 	unsigned int bucket_end;
 	bucket_end = bucket_start;
-	while(bucket_end < num_elems - 1 && bucket_array.bucket_edge[bucket_end + 1] == false){
-		bucket_end = bucket_end + 1;
-	}
+	while(bucket_end < num_elems - 1 && bucket_array.bucket_edge[bucket_end + 1] == false) bucket_end = bucket_end + 1;
 	return bucket_end;
 }
 
@@ -144,7 +145,7 @@ _Bool lexo_greater(unsigned int *array, int in_file, unsigned int first, unsigne
 	_Bool continue_checking = true;
 	_Bool return_value;
 
-	while(continue_checking && first + counter < num_chars && second + counter <= num_chars){
+	while(continue_checking && first + counter < num_chars && second + counter < num_chars){
 		lseek(in_file, first + counter, SEEK_SET);
 		read(in_file, &buf1, 1);
 		lseek(in_file, second + counter, SEEK_SET);
@@ -158,8 +159,7 @@ _Bool lexo_greater(unsigned int *array, int in_file, unsigned int first, unsigne
 			return_value = true;
 			continue_checking = false;
 		}
-		else
-			counter++;
+		else counter++;
 	}
 	return return_value;
 }
@@ -172,27 +172,17 @@ void lexo_merge(unsigned int *array, unsigned int ls, unsigned int le, unsigned 
 	unsigned int r_count = rs;
 	unsigned int temp_idx = 0;
 
-
 	while(l_count<=le && r_count<=re)	//while elements in both lists
 	{	
-
-		if(lexo_greater(array, in_file, array[l_count], array[r_count], sub_array_size, num_chars)){
-			temp_array[temp_idx++] = array[r_count++];
-		}
-		else{
-			temp_array[temp_idx++] = array[l_count++];
-		}
+		if(lexo_greater(array, in_file, array[l_count], array[r_count], sub_array_size, num_chars)) temp_array[temp_idx++] = array[r_count++];
+		else temp_array[temp_idx++] = array[l_count++];
 	}
 	
-	while(l_count<=le)	//copy remaining elements of the first list
-		temp_array[temp_idx++]=array[l_count++];
+	while(l_count<=le)	temp_array[temp_idx++]=array[l_count++];
 		
-	while(r_count<=re)	//copy remaining elements of the second list
-		temp_array[temp_idx++]=array[r_count++];
+	while(r_count<=re)	temp_array[temp_idx++]=array[r_count++];
 
-	for(int i = 0; i < temp_array_size; i++)
-		array[ls + i] = temp_array[i];
-
+	for(int i = 0; i < temp_array_size; i++) array[ls + i] = temp_array[i];
 	free(temp_array);
 }
 
@@ -203,76 +193,6 @@ void lexo_merge_sort(unsigned int *array, unsigned int bucket_start, unsigned in
 		lexo_merge_sort(array, bucket_start, mid_point, sub_array_size, num_chars, in_file);		//left recursion
 		lexo_merge_sort(array, mid_point + 1, bucket_end, sub_array_size, num_chars, in_file);    //right recursion
 		lexo_merge(array, bucket_start, mid_point, mid_point + 1, bucket_end, sub_array_size, num_chars, in_file);	
-	}
-}
-
-void sortBy_S(struct bucket_array bucket_array, unsigned int num_S, unsigned int dist){
-	unsigned int bucket_start = 0;
-	unsigned int bucket_end, bucket_size;
-	unsigned int tempWriteIndex = 0;
-	int cand_dist = 1; //candidate distance
-
-	struct bucket_array tempArray;
-
-	while(bucket_start < num_S - 1){
-
-		while(bucket_start < num_S - 1 && bucket_array.bucket_edge[bucket_start + 1] == true)
-			bucket_start++;
-
-		bucket_end = findBucketEnd(bucket_array, bucket_start, num_S);
-		bucket_size = bucket_end - bucket_start + 1;
-
-		if(bucket_size > 1){	
-			tempArray.array = malloc(sizeof(unsigned int)*bucket_size);
-			tempArray.bucket_edge = malloc(sizeof(_Bool)*bucket_size);
-			tempWriteIndex = 0;
-			
-			_Bool *foundinS = malloc(sizeof(_Bool)*bucket_size);
-			for(int i = 0; i < bucket_size; i ++)
-				foundinS[i] = false;
-			
-			//Find distance to check (all S-indexes can be resolved to an order from other S-indexes at equal distance)
-			_Bool end_loop = false;
-			for(int i = 1; i <= dist && !end_loop; i++){
-				cand_dist = i;
-				for(int j = 0; j < bucket_size; j++){
-					for(int k = 0; k < num_S; k++){
-						if(bucket_array.array[bucket_start + j] + cand_dist == bucket_array.array[k]){
-							foundinS[j] = true;
-						}
-					}
-				}
-				if(distFound(foundinS, bucket_size)){
-					dist = cand_dist;
-					end_loop = true;
-				}else{
-					for(int j = 0; j < bucket_size; j++)
-						foundinS[j] = false;
-				}
-			}
-
-			//If S indexes are found at equal distance from all indexes in bucket
-			if(distFound(foundinS, bucket_size)){
-				for(int i = 0; i < num_S; i++){
-					for(int j = 0; j < bucket_size; j++){
-						if(bucket_array.array[bucket_start + j] + dist == bucket_array.array[i]){
-							tempArray.array[tempWriteIndex] = bucket_array.array[bucket_start + j];
-							tempArray.bucket_edge[tempWriteIndex] = true;
-							tempWriteIndex++;
-						}						
-					}
-				}
-
-				for(int k = 0; k < bucket_size; k++){
-					bucket_array.array[bucket_start + k] = tempArray.array[k];
-					bucket_array.bucket_edge[bucket_start + k] = tempArray.bucket_edge[k];
-				}
-			}
-			free(tempArray.array);
-			free(tempArray.bucket_edge);
-			free(foundinS);
-		}
-		bucket_start = bucket_end + 1;
 	}
 }
 
@@ -287,7 +207,6 @@ void sortBy_m(struct bucket_array bucket_array, unsigned int bucket_start, unsig
 	_Bool bucket_boundary = true;
 
 	while(bucket_end < num_S - 1 && m <= max_m){
-
 		//Find the last element of current bucket
 		while(bucket_end < num_S - 1 && !bucket_array.bucket_edge[bucket_end + 1]){
 			bucket_end++;
@@ -295,8 +214,7 @@ void sortBy_m(struct bucket_array bucket_array, unsigned int bucket_start, unsig
 		bucket_size = bucket_end - bucket_start + 1;
 
 		if(bucket_size > 1){
-			tempArray.array = malloc(sizeof(unsigned int)*bucket_size);
-			tempArray.bucket_edge = malloc(sizeof(_Bool)*bucket_size);
+			tempArray = new_bucket_array(bucket_size);
 			_Bool *tempArraySet = malloc(sizeof(_Bool)*bucket_size);
 			for(int i = 0; i < bucket_size; i++)
 				tempArraySet[i] = false;
@@ -348,8 +266,7 @@ void sortBy_m(struct bucket_array bucket_array, unsigned int bucket_start, unsig
 					}
 				}
 			}
-			free(tempArray.array);
-			free(tempArray.bucket_edge);
+			free_bucket_array(tempArray);
 			free(tempArraySet);
 		}
 		bucket_start = bucket_end + 1;
