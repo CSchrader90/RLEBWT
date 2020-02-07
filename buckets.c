@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include "IO.h"
 #include "buckets.h"
 
 const int ALPHABET_SIZE  = 128;
@@ -138,7 +139,7 @@ unsigned int findBucketEnd(struct bucket_array bucket_array, unsigned int bucket
 	return bucket_end;
 }
 
-_Bool lexo_greater(unsigned int *array, int in_file, unsigned int first, unsigned int second, unsigned int sub_array_size, unsigned int num_chars){
+_Bool lexo_greater(unsigned int *array, int in_file, struct mem_block_node *reading_mem, unsigned int first, unsigned int second, unsigned int sub_array_size, unsigned int num_chars){
 	int counter = 0;
 	char buf1 = '\0';
 	char buf2 = '\0'; 
@@ -146,10 +147,8 @@ _Bool lexo_greater(unsigned int *array, int in_file, unsigned int first, unsigne
 	_Bool return_value;
 
 	while(continue_checking && first + counter < num_chars && second + counter < num_chars){
-		lseek(in_file, first + counter, SEEK_SET);
-		read(in_file, &buf1, 1);
-		lseek(in_file, second + counter, SEEK_SET);
-		read(in_file, &buf2, 1);
+		buf1 = read_bytes(in_file, reading_mem, first + counter);
+		buf2 = read_bytes(in_file, reading_mem, second + counter);
 
 		if(buf2 > buf1){
 			return_value = false;
@@ -164,7 +163,7 @@ _Bool lexo_greater(unsigned int *array, int in_file, unsigned int first, unsigne
 	return return_value;
 }
 
-void lexo_merge(unsigned int *array, unsigned int ls, unsigned int le, unsigned int rs, unsigned int re, unsigned int sub_array_size, unsigned int num_chars, int in_file){
+void lexo_merge(unsigned int *array, unsigned int ls, unsigned int le, unsigned int rs, unsigned int re, unsigned int sub_array_size, unsigned int num_chars, int in_file, struct mem_block_node *reading_mem){
 
 	unsigned int temp_array_size = re - ls + 1;
 	unsigned int *temp_array = malloc(sizeof(unsigned int)*temp_array_size);
@@ -174,7 +173,7 @@ void lexo_merge(unsigned int *array, unsigned int ls, unsigned int le, unsigned 
 
 	while(l_count<=le && r_count<=re)	//while elements in both lists
 	{	
-		if(lexo_greater(array, in_file, array[l_count], array[r_count], sub_array_size, num_chars)) temp_array[temp_idx++] = array[r_count++];
+		if(lexo_greater(array, in_file, reading_mem, array[l_count], array[r_count], sub_array_size, num_chars)) temp_array[temp_idx++] = array[r_count++];
 		else temp_array[temp_idx++] = array[l_count++];
 	}
 	
@@ -186,13 +185,13 @@ void lexo_merge(unsigned int *array, unsigned int ls, unsigned int le, unsigned 
 	free(temp_array);
 }
 
-void lexo_merge_sort(unsigned int *array, unsigned int bucket_start, unsigned int bucket_end, unsigned int sub_array_size, unsigned int num_chars,int in_file){
+void lexo_merge_sort(unsigned int *array, unsigned int bucket_start, unsigned int bucket_end, unsigned int sub_array_size, unsigned int num_chars, int in_file, struct mem_block_node *reading_mem){
 
 	if(bucket_start < bucket_end){
 		unsigned int mid_point = bucket_start + (bucket_end - bucket_start)/2;
-		lexo_merge_sort(array, bucket_start, mid_point, sub_array_size, num_chars, in_file);		//left recursion
-		lexo_merge_sort(array, mid_point + 1, bucket_end, sub_array_size, num_chars, in_file);    //right recursion
-		lexo_merge(array, bucket_start, mid_point, mid_point + 1, bucket_end, sub_array_size, num_chars, in_file);	
+		lexo_merge_sort(array, bucket_start, mid_point, sub_array_size, num_chars, in_file, reading_mem);	  //left recursion
+		lexo_merge_sort(array, mid_point + 1, bucket_end, sub_array_size, num_chars, in_file, reading_mem);    //right recursion
+		lexo_merge(array, bucket_start, mid_point, mid_point + 1, bucket_end, sub_array_size, num_chars, in_file, reading_mem);	
 	}
 }
 
@@ -222,11 +221,11 @@ void sortBy_m(struct bucket_array bucket_array, unsigned int bucket_start, unsig
 			int tempArrayIndex = 0; 
 
 			//For each letter i
-			for(int i = 0; i<ALPHABET_SIZE; i ++){
+			for(int i = 0; i < ALPHABET_SIZE; i++){
 				bucket_boundary = true;
 				head = m_head->list[i];
+				
 				//Indexes beginning with character i
-
 				while(head->next != NULL){
 					for(int j = 0; j < bucket_size; j++){
 						if(bucket_array.array[j + bucket_start] + m == head->val){

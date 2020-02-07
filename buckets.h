@@ -17,6 +17,8 @@ struct bucket_array {
 	_Bool *bucket_edge;
 };
 
+struct mem_block_node;
+
 struct bucket_node **new_bucket_list();
 void add_to_bucket_list(struct bucket_node **list, unsigned int index, unsigned char bucket);
 struct m_list *create_m_lists(int m);
@@ -31,6 +33,6 @@ void sortBy_m(struct bucket_array bucket_array, unsigned int bucket_start, unsig
 void sortBy_S(struct bucket_array bucket_array, unsigned int num_S, unsigned int dist);
 _Bool bucket_overfull(struct bucket_array bucket_array, int bucket_start, int bucket_size);
 unsigned int findBucketEnd(struct bucket_array bucket_array, unsigned int bucket_start, unsigned int num_elems);
-_Bool lexo_greater(unsigned int *array, int in_file, unsigned int first, unsigned int second, unsigned int sub_array_size, unsigned int num_S);
+_Bool lexo_greater(unsigned int *array, int in_file, struct mem_block_node *read_bytes, unsigned int first, unsigned int second, unsigned int sub_array_size, unsigned int num_chars);
 unsigned int findBucketEnd(struct bucket_array bucket_array, unsigned int bucket_start, unsigned int num_elems);
-void lexo_merge_sort(unsigned int *array, unsigned int bucket_start, unsigned int bucket_end, unsigned int sub_array_size, unsigned int num_S,int in_file);
+void lexo_merge_sort(unsigned int *array, unsigned int bucket_start, unsigned int bucket_end, unsigned int sub_array_size, unsigned int num_S, int in_file, struct mem_block_node *read_bytes);
