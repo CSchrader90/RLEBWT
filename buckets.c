@@ -6,32 +6,37 @@
 #include "IO.h"
 #include "buckets.h"
 
-const int ALPHABET_SIZE  = 128;
+const int ALPHABET_SIZE = 128;
+const int SKIP_DISTANCE = 1000;
 
-struct bucket_node **new_bucket_list(){
+struct skip_list *new_skip_list();
+void add_to_skip_list(bucket_node **list, struct skip_list *skip_list, unsigned int index, unsigned char bucket);
+void free_skip_list(struct skip_list *skip_list);
 
-	struct bucket_node **list = malloc(sizeof(struct bucket_node *)*ALPHABET_SIZE);
+bucket_node **new_bucket_list(){
+
+	bucket_node **list = malloc(sizeof(bucket_node *)*ALPHABET_SIZE);
 	for(int i = 0; i < ALPHABET_SIZE; i++){
-		list[i] = malloc(sizeof(struct bucket_node));
+		list[i] = malloc(sizeof(bucket_node));
 		list[i]->next = NULL;
 		list[i]->last = list[i];
 	}
 	return list;
 }
 
-void add_to_bucket_list(struct bucket_node **list, unsigned int index, unsigned char bucket){
+void add_to_bucket_list(bucket_node **list, unsigned int index, unsigned char bucket){
 
-	struct bucket_node *head = list[bucket]->last;
+	bucket_node *head = list[bucket]->last;
 	head->val = index;
-	head->next = malloc(sizeof(struct bucket_node));
+	head->next = malloc(sizeof(bucket_node));
 	head = head->next;
 	head->next = NULL;
 	list[bucket]->last = head;
 }
 
-void free_bucket_list(struct bucket_node **list){
+void free_bucket_list(bucket_node **list){
 
-	struct bucket_node *temp;
+	bucket_node *temp;
 	for(int i = 0; i < ALPHABET_SIZE; i++){
 		while(list[i]->next!= NULL){
 			temp = list[i]->next;
@@ -45,12 +50,13 @@ void free_bucket_list(struct bucket_node **list){
 
 struct m_list *create_m_lists(int m){
 
-	struct m_list *First = malloc(sizeof(struct m_list));
-	First->dist = m;
-	First->list = new_bucket_list();
-	First->next = NULL;
+	struct m_list *new = malloc(sizeof(struct m_list));
+	new->dist = m;
+	new->list = new_bucket_list();
+	new->next = NULL;
+	new->skip_list = new_skip_list();
 
-	return First;
+	return new;
 }
 
 void add_to_m_list(struct m_list *lists, unsigned int distance, unsigned int index, unsigned char bucket){
@@ -63,24 +69,81 @@ void add_to_m_list(struct m_list *lists, unsigned int distance, unsigned int ind
 		cur_list = cur_list->next;
 	}
 	add_to_bucket_list(cur_list->list, index, bucket);
+	add_to_skip_list(cur_list->list, cur_list->skip_list, index, bucket);
 }
 
 void free_m_lists(struct m_list *m){
 	struct m_list *temp;
 	while(m->next!=NULL){
 		free_bucket_list(m->list);
+		free_skip_list(m->skip_list);
 		temp = m->next;
 		free(m);
 		m = temp;
 	}
 	free_bucket_list(m->list);
+	free_skip_list(m->skip_list);
 	free(m);
 }
 
-struct bucket_array bucket_to_array(struct bucket_node **S_buckets, int num_S){
+struct skip_list *new_skip_list(){
+	struct skip_list *new = malloc(sizeof(struct skip_list));
+	skip_list_node **list = malloc(sizeof(skip_list_node *)*ALPHABET_SIZE);
+	unsigned int *count   = malloc(sizeof(unsigned int)*ALPHABET_SIZE);
+	for(int i = 0; i < ALPHABET_SIZE; i++){
+		list[i] = malloc(sizeof(skip_list_node));
+		list[i]-> next = NULL;
+		list[i]-> m_list_node = NULL;
+		list[i]-> index = 0;
+		count[i] = 0;
+	}
+	new->list = list;
+	new->count = count;
+
+	return new;
+}
+
+void add_to_skip_list(bucket_node **list, struct skip_list *skip_list, unsigned int index, unsigned char bucket){
+	if(++skip_list->count[bucket] == SKIP_DISTANCE){
+		skip_list_node *head = skip_list->list[bucket];
+		while(head->next != NULL){
+			head = head->next;
+		}
+
+		head -> index = index;
+		head -> m_list_node = list[bucket]->last;
+		skip_list_node *next = malloc(sizeof(skip_list_node));
+		next->index = 0;
+		next->m_list_node = NULL;
+		next->next = NULL;
+		head->next = next;
+
+		skip_list->count[bucket] = 0;
+	}
+}
+
+void free_skip_list(struct skip_list *skip_list){
+	skip_list_node *temp;
+	skip_list_node *list;
+
+	for(int i = 0; i < ALPHABET_SIZE; i++){
+		list = skip_list->list[i];
+		while(list->next!= NULL){
+			temp = list->next;
+			free(list);
+			list = temp;
+		}
+		free(list);
+	}
+	free(skip_list->count);
+	free(skip_list->list);
+	free(skip_list);
+}
+
+struct bucket_array bucket_to_array(bucket_node **S_buckets, int num_S){
 
 	struct bucket_array array;
-	struct bucket_node *head;
+	bucket_node *head;
 
 	array.array = malloc(sizeof(unsigned int)*num_S);
 	array.bucket_edge = malloc(sizeof(_Bool)*num_S);
@@ -200,7 +263,7 @@ void sortBy_m(struct bucket_array bucket_array, unsigned int bucket_start, unsig
 	unsigned int bucket_size;
 	unsigned int bucket_end = bucket_start;
 	struct m_list *m_head = m_list;
-	struct bucket_node *head = *m_head->list;
+	bucket_node *head = *m_head->list;
 	struct bucket_array tempArray;
 
 	_Bool bucket_boundary = true;
@@ -226,16 +289,21 @@ void sortBy_m(struct bucket_array bucket_array, unsigned int bucket_start, unsig
 				head = m_head->list[i];
 				
 				//Indexes beginning with character i
-				while(head->next != NULL){
-					for(int j = 0; j < bucket_size; j++){
+				for(int j = 0; j < bucket_size; j++){
+					//Use skip lists to reduce scanning through m-lists
+					while(m_head->skip_list->list[i]->next != NULL && m_head->skip_list->list[i]->next->index < bucket_array.array[j + bucket_start] + m){
+						head = m_head->skip_list->list[i]->m_list_node;
+						m_head->skip_list->list[i] = m_head->skip_list->list[i]->next;
+					}
+					while(head->next != NULL){
 						if(bucket_array.array[j + bucket_start] + m == head->val){
 							tempArray.array[tempArrayIndex] = bucket_array.array[j+ bucket_start];
 							tempArray.bucket_edge[tempArrayIndex++] = bucket_boundary;
 							tempArraySet[j] = true;
 							bucket_boundary = false;
 						}
+						head = head->next;
 					}
-					head = head->next;
 				}
 			}
 

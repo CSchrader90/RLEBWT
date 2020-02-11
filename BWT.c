@@ -16,12 +16,10 @@
 //Generate suffix array and use to derive BWT in linear time
 void create_BWT(char *inputFileName, char *outputFolderName){
 
-	char *output_file_name = create_file_name(outputFolderName, inputFileName, ".bwt");
 	char *output_s_file    = create_file_name(outputFolderName, inputFileName, ".s");
 	char *output_b_file    = create_file_name(outputFolderName, inputFileName, ".b");
 
 	int in_file = open(inputFileName, O_RDONLY);
-	int out_file = open(output_file_name, O_RDWR | O_CREAT);
 	int b_file  = open(output_b_file, O_RDWR | O_CREAT);
 	int s_file  = open(output_s_file, O_RDWR | O_CREAT);
 
@@ -41,7 +39,7 @@ void create_BWT(char *inputFileName, char *outputFolderName){
 	int max_dist = 0;
 	int num_S = 1;
 
-	struct bucket_node **S_buckets = new_bucket_list();
+	bucket_node **S_buckets = new_bucket_list();
 	struct m_list *m_lists = create_m_lists(1);
 	unsigned int input_counter = 0;
 	*buf_start = read_bytes(in_file, reading_mem, input_counter++);
@@ -89,7 +87,6 @@ void create_BWT(char *inputFileName, char *outputFolderName){
 	sortBy_m(S_array, 0, num_S, 1, max_dist, m_lists);
 	free_m_lists(m_lists);
 
-
 	//If there are still buckets of S with multiple values
 	unsigned int bucket_start = 0;
 	unsigned int bucket_end   = bucket_start;
@@ -102,8 +99,8 @@ void create_BWT(char *inputFileName, char *outputFolderName){
 	}
 
 	//Add type L indexes to front of buckets
-	struct bucket_node **bucket_final = new_bucket_list();
-	struct bucket_node *final_list_head;
+	bucket_node **bucket_final = new_bucket_list();
+	bucket_node *final_list_head;
 	unsigned int S_counter = 1;
 	unsigned char next_bucket;
 
@@ -112,7 +109,6 @@ void create_BWT(char *inputFileName, char *outputFolderName){
 
 	//Determine character the current S_array bucket represents
 	buf_S[0] = read_bytes(in_file, reading_mem, S_array.array[S_counter]);
-
 	
 	_Bool found = false;
 	unsigned char final_list_char = '\0';
@@ -122,7 +118,7 @@ void create_BWT(char *inputFileName, char *outputFolderName){
 		else 
 			final_list_char++;
 	}
-
+	
 	while(S_counter < num_S || final_list_char < ALPHABET_SIZE){
 
 		if(S_counter < num_S && final_list_char < ALPHABET_SIZE)
@@ -196,7 +192,7 @@ void create_BWT(char *inputFileName, char *outputFolderName){
 		}
 
 	}
-	
+
 	//Append S indexes
 	for(int i = 0; i < num_S; i++){
 		buf_temp[0] = read_bytes(in_file, reading_mem, S_array.array[i]);
@@ -205,7 +201,7 @@ void create_BWT(char *inputFileName, char *outputFolderName){
 	free_bucket_array(S_array);
 
 	//Write to file
-	struct bucket_node *head;
+	bucket_node *head;
 	int temp_idx;
 	int bit_count = 0;
 	unsigned char b_out = '\0';
@@ -220,7 +216,6 @@ void create_BWT(char *inputFileName, char *outputFolderName){
 			else
 				input_counter = head->val - 1;
 			*buf_temp = read_bytes(in_file, reading_mem, input_counter++);
-			write(out_file, buf_temp, 1);
 			if(bit_count == 8){
 				write(b_file, &b_out, 1);
 				bit_count = 0;
@@ -238,7 +233,6 @@ void create_BWT(char *inputFileName, char *outputFolderName){
 	}
 
 	free_bucket_list(bucket_final);
-	free(output_file_name);
 	free(output_s_file);
 	free(output_b_file);
 	free(buf_start);
@@ -248,7 +242,6 @@ void create_BWT(char *inputFileName, char *outputFolderName){
 	free_mem_block_list(reading_mem);
 
 	close(in_file);
-	close(out_file);
 	close(b_file);
 	close(s_file);
 }

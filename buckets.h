@@ -1,14 +1,29 @@
 extern const int ALPHABET_SIZE;
 
-struct bucket_node {
+typedef struct list_of_list_node_with_last_pointer bucket_node;
+typedef struct list_of_list_node skip_list_node;
+
+struct list_of_list_node {
+	unsigned int index;
+	bucket_node *m_list_node;
+	skip_list_node *next;
+};
+
+struct skip_list {
+	unsigned int *count;
+	skip_list_node **list;
+};
+
+struct list_of_list_node_with_last_pointer {
 	unsigned int val;
-	struct bucket_node *next;
-	struct bucket_node *last;
+	bucket_node *next;
+	bucket_node *last;
 };
 
 struct m_list {
 	int dist;
-	struct bucket_node **list;
+	bucket_node **list;
+	struct skip_list *skip_list;
 	struct m_list *next;
 };
 
@@ -19,15 +34,15 @@ struct bucket_array {
 
 struct mem_block_node;
 
-struct bucket_node **new_bucket_list();
-void add_to_bucket_list(struct bucket_node **list, unsigned int index, unsigned char bucket);
+bucket_node **new_bucket_list();
+void add_to_bucket_list(bucket_node **list, unsigned int index, unsigned char bucket);
 struct m_list *create_m_lists(int m);
 void add_to_m_list(struct m_list *lists, unsigned int distance, unsigned int index, unsigned char bucket);
 void free_m_lists(struct m_list *m);
-void free_bucket_list(struct bucket_node **list);
+void free_bucket_list(bucket_node **list);
 struct bucket_array new_bucket_array(unsigned int size);
 void free_bucket_array(struct bucket_array array);
-struct bucket_array bucket_to_array(struct bucket_node **S_buckets, int num_S);
+struct bucket_array bucket_to_array(bucket_node **S_buckets, int num_S);
 _Bool bucketContainsMultipleEntries(struct bucket_array bucket_array, int bucket_start, int bucket_end);
 void sortBy_m(struct bucket_array bucket_array, unsigned int bucket_start, unsigned int num_S, int m, int max_m, struct m_list *m_list);
 void sortBy_S(struct bucket_array bucket_array, unsigned int num_S, unsigned int dist);

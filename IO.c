@@ -14,7 +14,6 @@
 const int BLOCK_SIZE = 4096;
 const int MAX_BLOCKS = 6;
 
-
 struct mem_block_node *create_new_mem_block(){
 	struct mem_block_node *new_mem = malloc(sizeof(struct mem_block_node));
 	new_mem->data = NULL;
