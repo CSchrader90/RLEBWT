@@ -20,8 +20,14 @@ void create_BWT(char *inputFileName, char *outputFolderName){
 	char *output_b_file    = create_file_name(outputFolderName, inputFileName, ".b");
 
 	int in_file = open(inputFileName, O_RDONLY);
-	int b_file  = open(output_b_file, O_RDWR | O_CREAT);
-	int s_file  = open(output_s_file, O_RDWR | O_CREAT);
+	int b_file  = open(output_b_file, O_RDWR);
+	if(b_file == -1){
+		b_file  = open(output_b_file, O_RDWR | O_CREAT);
+	}
+	int s_file  = open(output_s_file, O_RDWR );
+	if(s_file == -1){
+		s_file = open(output_s_file, O_RDWR | O_CREAT);
+	}
 
 	long unsigned int num_chars = lseek(in_file, 0, SEEK_END); //number of characters
 	lseek(in_file, 0, SEEK_SET);
@@ -223,7 +229,7 @@ void create_BWT(char *inputFileName, char *outputFolderName){
 			}
 
 			if(*buf_temp != prev_char){
-				b_out |= 1 << bit_count;
+				b_out |= 1 << (7 -bit_count);
 				write(s_file, buf_temp, 1);
 			} 
 			bit_count++;
@@ -231,6 +237,12 @@ void create_BWT(char *inputFileName, char *outputFolderName){
 			head = head -> next;
 		}
 	}
+
+	while(bit_count < 8){
+		b_out |= 1 << (7 -bit_count);
+		bit_count++;
+	}
+	write(b_file, &b_out, 1);
 
 	free_bucket_list(bucket_final);
 	free(output_s_file);

@@ -7,7 +7,7 @@
 #include "buckets.h"
 
 const int ALPHABET_SIZE = 128;
-const int SKIP_DISTANCE = 1000;
+const int SKIP_DISTANCE = 5000;
 
 struct skip_list *new_skip_list();
 void add_to_skip_list(bucket_node **list, struct skip_list *skip_list, unsigned int index, unsigned char bucket);
@@ -106,17 +106,19 @@ struct skip_list *new_skip_list(){
 void add_to_skip_list(bucket_node **list, struct skip_list *skip_list, unsigned int index, unsigned char bucket){
 	if(++skip_list->count[bucket] == SKIP_DISTANCE){
 		skip_list_node *head = skip_list->list[bucket];
+
 		while(head->next != NULL){
 			head = head->next;
 		}
 
+		skip_list_node *new = malloc(sizeof(skip_list_node));
+		new -> index = 0;
+		new -> m_list_node = NULL;
+		new -> next = NULL;
+
 		head -> index = index;
 		head -> m_list_node = list[bucket]->last;
-		skip_list_node *next = malloc(sizeof(skip_list_node));
-		next->index = 0;
-		next->m_list_node = NULL;
-		next->next = NULL;
-		head->next = next;
+		head -> next = new;
 
 		skip_list->count[bucket] = 0;
 	}
@@ -124,19 +126,19 @@ void add_to_skip_list(bucket_node **list, struct skip_list *skip_list, unsigned 
 
 void free_skip_list(struct skip_list *skip_list){
 	skip_list_node *temp;
-	skip_list_node *list;
-
+	skip_list_node *head;
 	for(int i = 0; i < ALPHABET_SIZE; i++){
-		list = skip_list->list[i];
-		while(list->next!= NULL){
-			temp = list->next;
-			free(list);
-			list = temp;
+		head = skip_list->list[i];
+		while(head->next != NULL){
+			temp = head->next;
+			free(head);
+			head = temp;
 		}
-		free(list);
+		free(head);
+
 	}
-	free(skip_list->count);
 	free(skip_list->list);
+	free(skip_list->count);
 	free(skip_list);
 }
 
@@ -263,7 +265,8 @@ void sortBy_m(struct bucket_array bucket_array, unsigned int bucket_start, unsig
 	unsigned int bucket_size;
 	unsigned int bucket_end = bucket_start;
 	struct m_list *m_head = m_list;
-	bucket_node *head = *m_head->list;
+	bucket_node *head;
+	skip_list_node *skip_list_head;
 	struct bucket_array tempArray;
 
 	_Bool bucket_boundary = true;
@@ -290,10 +293,11 @@ void sortBy_m(struct bucket_array bucket_array, unsigned int bucket_start, unsig
 				
 				//Indexes beginning with character i
 				for(int j = 0; j < bucket_size; j++){
+					skip_list_head = m_head->skip_list->list[i];
 					//Use skip lists to reduce scanning through m-lists
-					while(m_head->skip_list->list[i]->next != NULL && m_head->skip_list->list[i]->next->index < bucket_array.array[j + bucket_start] + m){
-						head = m_head->skip_list->list[i]->m_list_node;
-						m_head->skip_list->list[i] = m_head->skip_list->list[i]->next;
+					while(skip_list_head->next != NULL && skip_list_head->next->index < bucket_array.array[j + bucket_start] + m){
+						head = skip_list_head->m_list_node;
+						skip_list_head = skip_list_head->next;
 					}
 					while(head->next != NULL){
 						if(bucket_array.array[j + bucket_start] + m == head->val){
