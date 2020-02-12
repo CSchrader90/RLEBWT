@@ -2,6 +2,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <dirent.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -18,6 +19,12 @@ void create_BWT(char *inputFileName, char *outputFolderName){
 
 	char *output_s_file    = create_file_name(outputFolderName, inputFileName, ".s");
 	char *output_b_file    = create_file_name(outputFolderName, inputFileName, ".b");
+
+
+	DIR* dir = opendir(outputFolderName);
+	if(!dir)
+		mkdir(outputFolderName, 0777);
+
 
 	int in_file = open(inputFileName, O_RDONLY);
 	int b_file  = open(output_b_file, O_RDWR);
