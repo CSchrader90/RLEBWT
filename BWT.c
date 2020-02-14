@@ -20,43 +20,39 @@ void create_BWT(char *inputFileName, char *outputFolderName){
 	char *output_s_file    = create_file_name(outputFolderName, inputFileName, ".s");
 	char *output_b_file    = create_file_name(outputFolderName, inputFileName, ".b");
 
-
 	DIR* dir = opendir(outputFolderName);
-	if(!dir)
-		mkdir(outputFolderName, 0777);
-
+	if(!dir) mkdir(outputFolderName, 0777); //if directory not found, create it
 
 	int in_file = open(inputFileName, O_RDONLY);
-	int b_file  = open(output_b_file, O_RDWR);
-	if(b_file == -1){
-		b_file  = open(output_b_file, O_RDWR | O_CREAT);
-	}
-	int s_file  = open(output_s_file, O_RDWR );
-	if(s_file == -1){
-		s_file = open(output_s_file, O_RDWR | O_CREAT);
-	}
-
 	long unsigned int num_chars = lseek(in_file, 0, SEEK_END); //number of characters
 	lseek(in_file, 0, SEEK_SET);
 
-	struct mem_block_node *reading_mem = create_new_mem_block();
+	remove(output_b_file);
+	int b_file  = open(output_b_file, O_RDWR | O_CREAT);
+	remove(output_s_file);
+	int s_file  = open(output_s_file, O_RDWR | O_CREAT);
 
+	struct mem_block_node *reading_mem = create_new_mem_block();
+	struct mem_block_node *write_s_mem = create_new_mem_block();
+	struct mem_block_node *write_b_mem = create_new_mem_block();
+
+	//buffers
 	unsigned char *buf_start = malloc(sizeof(char));
 	unsigned char *buf_end   = malloc(sizeof(char));
 	unsigned char *buf_temp  = malloc(sizeof(char)*2);
 	char *buf_S = malloc(sizeof(unsigned char)*2);
 
 	unsigned int start_idx = 0, end_idx = 0;
-	int seq_idx;
-	int distance = 0;
-	int max_dist = 0;
-	int num_S = 1;
+	int seq_idx;      //sequence index for sequences of repeated characters
+	int distance = 0; 
+	int max_dist = 0; //max m-dist found from input
+	int num_S = 1;    //number of indexes which have a character lexicographically smaller than the following index
 
 	bucket_node **S_buckets = new_bucket_list();
 	struct m_list *m_lists = create_m_lists(1);
 	unsigned int input_counter = 0;
 	*buf_start = read_bytes(in_file, reading_mem, input_counter++);
-	while(input_counter < num_chars){
+	while(input_counter < num_chars){ //reading through entire input, bucketing S indexes and building m-lists
 		*buf_end = read_bytes(in_file, reading_mem, input_counter++);
 		end_idx++;
 
@@ -93,6 +89,7 @@ void create_BWT(char *inputFileName, char *outputFolderName){
 		add_to_m_list(m_lists, distance, start_idx, *buf_start); 
 	}
 
+	//convert list of linked lists to bucket_array
 	struct bucket_array S_array = bucket_to_array(S_buckets, num_S);
 	free_bucket_list(S_buckets);
 
@@ -120,9 +117,8 @@ void create_BWT(char *inputFileName, char *outputFolderName){
 	buf_temp[0] = read_bytes(in_file, reading_mem, num_chars - 2);
 	add_to_bucket_list(bucket_final, num_chars - 2, *buf_temp);
 
-	//Determine character the current S_array bucket represents
-	buf_S[0] = read_bytes(in_file, reading_mem, S_array.array[S_counter]);
-	
+	buf_S[0] = read_bytes(in_file, reading_mem, S_array.array[S_counter]);	//Determine character the current S_array bucket represents
+
 	_Bool found = false;
 	unsigned char final_list_char = '\0';
 	while(final_list_char < ALPHABET_SIZE && !found){
@@ -220,6 +216,9 @@ void create_BWT(char *inputFileName, char *outputFolderName){
 	unsigned char b_out = '\0';
 	unsigned char prev_char = '\0';
 
+	int output_b_counter = 0;
+	int output_s_counter = 0;
+
 	for(int i = 0; i < ALPHABET_SIZE; i ++){
 		head = bucket_final[i];
 		while(head->next != NULL){
@@ -230,14 +229,14 @@ void create_BWT(char *inputFileName, char *outputFolderName){
 				input_counter = head->val - 1;
 			*buf_temp = read_bytes(in_file, reading_mem, input_counter++);
 			if(bit_count == 8){
-				write(b_file, &b_out, 1);
+				write_bytes(b_file, write_b_mem, output_b_counter++, b_out);
 				bit_count = 0;
 				b_out = '\0';
 			}
 
 			if(*buf_temp != prev_char){
 				b_out |= 1 << (7 -bit_count);
-				write(s_file, buf_temp, 1);
+				write_bytes(s_file, write_s_mem, output_s_counter++, *buf_temp);
 			} 
 			bit_count++;
 			prev_char = *buf_temp;
@@ -246,10 +245,12 @@ void create_BWT(char *inputFileName, char *outputFolderName){
 	}
 
 	while(bit_count < 8){
-		b_out |= 1 << (7 -bit_count);
+		b_out |= 1 << (7 - bit_count);
 		bit_count++;
 	}
-	write(b_file, &b_out, 1);
+	write_bytes(b_file, write_b_mem, output_b_counter++, b_out);
+	write_last_mem_block(s_file, write_s_mem, output_s_counter);
+	write_last_mem_block(b_file, write_b_mem, output_b_counter);
 
 	free_bucket_list(bucket_final);
 	free(output_s_file);

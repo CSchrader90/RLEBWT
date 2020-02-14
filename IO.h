@@ -11,3 +11,5 @@ struct mem_block_node *create_new_mem_block();
 struct mem_block_node *add_new_mem_block(int in_file, unsigned int block_num);
 void free_mem_block_list(struct mem_block_node *list);
 char read_bytes(int in_file, struct mem_block_node *mem_block_node, unsigned int offset);
+void write_bytes(int out_file, struct mem_block_node *mem_block_node, unsigned int offset, char character);
+void write_last_mem_block(int out_file, struct mem_block_node *mem_block_node, unsigned int num_bytes);

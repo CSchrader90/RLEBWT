@@ -1,4 +1,6 @@
 extern const int ALPHABET_SIZE;
+extern const int SKIP_DISTANCE[];
+extern const int SKIP_DISTANCE_MULTIPLIER;
 
 typedef struct list_of_list_node_with_last_pointer bucket_node;
 typedef struct list_of_list_node skip_list_node;
