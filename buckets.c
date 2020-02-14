@@ -1,13 +1,11 @@
-#include <sys/types.h>
-#include <unistd.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include "IO.h"
 #include "buckets.h"
 
 const int ALPHABET_SIZE = 128;
 //SKIP_DISTANCE to give a skip distance proportional to frequency of characters in English text
+//when scanning through m-lists
 const int SKIP_DISTANCE[] = {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2000,\
 	1,1,1,1,1,1,1,1,1,1,1,1,1,160, 1, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 1, 1, 1, 1, 1, 1, 1, \
 	33, 13,15, 9, 8, 11, 5, 12, 21, 2, 3, 7, 11, 7, 22, 12, 1, 8, 19, 50, 3, 2, 16, 1, 2, 1, 1, 1, \
