@@ -19,6 +19,7 @@ nodes to iterate through when using them to sort the S-list.
 ## Running
 
 makefile included
+
 Run with arguments: -m *input file name* *Output folder name*
 
 
