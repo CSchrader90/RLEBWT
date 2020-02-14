@@ -19,7 +19,7 @@ nodes to iterate through when using them to sort the S-list.
 ## Running
 
 makefile included
-Run with arguments -m *input file name* *Output folder name*
+Run with arguments: -m *input file name* *Output folder name*
 
 
 Will work for characters 0-127 ASCII. This can be extended by editing ALPHABET_SIZE in *buckets.c*
