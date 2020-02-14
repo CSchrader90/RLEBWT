@@ -11,6 +11,7 @@ Linux system calls used for input/output
 This implementation builds several lists in one read of the input: 
 
 **S-list**  - list of indexes for which the character following is lexicographically larger
+
 **m-lists** - lists of indexes of characters which are m characters from previous S index
 
 Single-level skip lists are used with the m-lists to improve speed by reducing the number of linked list
