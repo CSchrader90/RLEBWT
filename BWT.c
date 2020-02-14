@@ -260,8 +260,11 @@ void create_BWT(char *inputFileName, char *outputFolderName){
 	free(buf_temp);
 	free(buf_S);
 	free_mem_block_list(reading_mem);
+	free_mem_block_list(write_s_mem);
+	free_mem_block_list(write_b_mem);
 
 	close(in_file);
 	close(b_file);
 	close(s_file);
+	closedir(dir);
 }
