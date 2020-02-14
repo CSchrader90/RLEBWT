@@ -9,6 +9,7 @@ Linux system calls used for input/output
 ## Notes 
 
 This implementation builds several lists in one read of the input: 
+
 **S-list**  - list of indexes for which the character following is lexicographically larger
 **m-lists** - lists of indexes of characters which are m characters from previous S index
 
