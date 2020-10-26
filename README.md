@@ -1,6 +1,6 @@
 # Run-Length Encoded BWT (RLEBWT) 
 
-C implementation to generate Burrows-Wheel Transform in O(n) time (average case) of a text file
+C implementation to generate Burrows-Wheeler Transform in O(n) time (average case) of a text file
 
 ## Prerequisites
 
