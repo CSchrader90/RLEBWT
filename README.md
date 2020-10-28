@@ -35,5 +35,5 @@ The last (sentinel) character of the file must have the lowest, unique ASCII val
 To reduce the required run-time memory (although increase execution time), additional sweeps of the input could be
 made for each m-list and freeing this before considering the list for m + 1.
 
-Groups of S-indexes which cannot not be resolved to an order by using the m-lists are sorted naively with an implementation of merge sort. 
+Groups of S-indexes which cannot be resolved to an order by using the m-lists are sorted naively with an implementation of merge sort. 
 This can be altered to use the order of subsequent S indexes to improve time performance
